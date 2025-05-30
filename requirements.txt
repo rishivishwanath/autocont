@@ -7,8 +7,11 @@ google-auth
 google-auth-oauthlib
 google-auth-httplib2
 google-api-python-client
-# OpenAI Whisper for speech recognition
-openai-whisper
+
+# OpenAI Whisper and its pinned dependencies
+openai-whisper==20231117
+torch==2.0.1
+triton==2.0.0
 
 # Redis for caching
 redis
@@ -30,10 +33,11 @@ langchain
 langchain-core
 langchain-community
 langchain-google-genai
-# Additional utilities that might be needed
+
+# Additional utilities
 Pillow
 numpy
 ffmpeg-python
 
-#amazon
+# Amazon SDK
 boto3
