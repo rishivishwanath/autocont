@@ -6,15 +6,15 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from utils import get_env_var
-# Load secrets from environment variables
-CLIENT_ID = get_env_var("YOUTUBE_CLIENT_ID")
-CLIENT_SECRET = get_env_var("YOUTUBE_CLIENT_SECRET")
-REFRESH_TOKEN = get_env_var("YOUTUBE_REFRESH_TOKEN")
+from supabase import create_client, Client
 
+url=get_env_var("SUPABASE_URL")
+key=get_env_var("SUPABASE_KEY")
+supabase: Client = create_client(url, key)
 # File path of the video
 VIDEO_FILE = "output/output.mp4"
 
-def get_credentials():
+def get_credentials(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN):
     creds_data = {
         "token": "",
         "refresh_token": REFRESH_TOKEN,
@@ -30,8 +30,15 @@ def get_credentials():
         creds.refresh(request)
     return creds
 
-def upload_video(file_path, title, description, tags=None):
-    creds = get_credentials()
+def upload_video(file_path, title, description,user_id, tags=None):
+    values= (
+    supabase.table("user_api_keys")
+    .select("*")
+    .eq("id",user_id)
+    .execute())
+# "201a4aff-111e-4a65-91ef-532c6a4171cc"
+    print(values.data[0]["YOUTUBE_CLIENT_ID"],values.data[0]["YOUTUBE_CLIENT_SECRET"], values.data[0]["YOUTUBE_REFRESH_TOKEN"])
+    creds = get_credentials(values.data[0]["YOUTUBE_CLIENT_ID"],values.data[0]["YOUTUBE_CLIENT_SECRET"], values.data[0]["YOUTUBE_REFRESH_TOKEN"])
     youtube = build("youtube", "v3", credentials=creds)
 
     request_body = {
@@ -59,4 +66,5 @@ def upload_video(file_path, title, description, tags=None):
 
     response = upload_request.execute()
     print(f"[✅] Video uploaded successfully: https://youtube.com/watch?v={response['id']}")
+    return "success"
 

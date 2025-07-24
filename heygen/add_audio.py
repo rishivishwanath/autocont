@@ -201,7 +201,7 @@ def pipeline(video_url, audio_url, output_video_path="output.mp4", font_path="fo
         # Download both video and audio to local temporary files
         print("Downloading video and audio files...")
         video_temp_path = download_to_temp(video_url, '.mp4')
-        audio_temp_path = download_to_temp(audio_url, '.mp3')
+        audio_temp_path = audio_url
         
         # Merge video and audio using local file paths
         merge_audio_video(video_temp_path, audio_temp_path, merged_video_path)
