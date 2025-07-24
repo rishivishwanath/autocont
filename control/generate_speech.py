@@ -1,6 +1,6 @@
 import os
 from utils import get_env_var
-from backend.fetchData.summarise_feed import give_text
+from fetchData.summarise_feed import give_text
 from supabase import create_client, Client
 from speech.polly import use_polly
 import tempfile

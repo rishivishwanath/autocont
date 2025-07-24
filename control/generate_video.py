@@ -4,9 +4,9 @@ import sys
 import os
 from utils import get_env_var
 import time
-from backend.heygen.generate_video_audio import generate
-from backend.heygen.generate_video_text import generate_video_text
-from backend.fetchData.summarise_feed import give_text
+from heygen.generate_video_audio import generate
+from heygen.generate_video_text import generate_video_text
+from fetchData.summarise_feed import give_text
 
 def generate_heygen_video(avatar_id,voice_id,a=0,text=None,input_path="output/output1.mp3"):
     HEYGEN_API_KEY = get_env_var("HEYGEN_API_KEY")

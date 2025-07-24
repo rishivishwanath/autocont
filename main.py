@@ -2,10 +2,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
-from backend.fetchData.summarise_feed import give_text
-from backend.pipelines.pipeline import execute
-from backend.pipelines.video_generation_pipeline import generate_video_pipeline
-from backend.control.generate_random_text import gen_text
+from fetchData.summarise_feed import give_text
+from pipelines.pipeline import execute
+from pipelines.video_generation_pipeline import generate_video_pipeline
+from control.generate_random_text import gen_text
 from utils import get_env_var
 
 app = FastAPI()

@@ -2,11 +2,11 @@ import requests
 import json
 import sys
 import os
-from backend.control.generate_video import generate_heygen_video
+from control.generate_video import generate_heygen_video
 import tempfile
 from supabase import create_client, Client
 import subprocess
-from backend.upload.upload_video import upload_video
+from upload.upload_video import upload_video
 
 def download_to_temp(url, extension=None):
     """Download file from URL to temporary file."""

@@ -1,3 +1,18 @@
+ELEVENLABS_API_KEY=
+HEYGEN_API_KEY=
+NEWS_API_KEY=
+PIPFEED_API_KEY=
+SUPABASE_URL=
+SUPABASE_KEY=
+GOOGLE_API_KEY=
+YOUTUBE_CLIENT_ID=
+YOUTUBE_CLIENT_SECRET=
+YOUTUBE_REFRESH_TOKEN=
+AMAZON_ACCESS_KEY=
+AMAZON_SECRET_KEY=
+PORT=8081
+
+
 /generate-minecraft(for non avatar mode)
 mode (0=text must be passes,1 text is automatically generated)
 text=text,

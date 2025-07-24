@@ -1,10 +1,10 @@
 from supabase import create_client, Client
-from backend.control.generate_speech import generate_speech
-from backend.fetchData.summarise_feed import give_text
+from control.generate_speech import generate_speech
+from fetchData.summarise_feed import give_text
 from utils import get_env_var
 import random
-from backend.heygen.add_audio import pipeline
-from backend.upload.upload_video import upload_video
+from heygen.add_audio import pipeline
+from upload.upload_video import upload_video
 
 def execute(text=None, 
             voice_id="JBFqnCBsd6RMkjVDRZzb",
