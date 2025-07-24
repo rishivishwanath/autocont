@@ -4,7 +4,7 @@ from utils import get_env_var
 import time
 
 
-def generate(input_path="output/output1.mp3"):
+def generate(input_path="output/output1.mp3",avatar_id="de90ffeec028414a90ad2d954dc85b41"):
     HEYGEN_API_KEY = get_env_var("HEYGEN_API_KEY")
     url = "https://upload.heygen.com/v1/asset"
 
@@ -19,10 +19,10 @@ def generate(input_path="output/output1.mp3"):
         response = requests.post(url, headers=headers, data=file)
     print(response.status_code)
     print(response.json().get("data")['id'])
-    return generate_video(response.json().get("data")['id'], title="Test Video", dimension="16:9")
+    return generate_video(response.json().get("data")['id'], title="Test Video", avatar_id=avatar_id)
 
 
-def generate_video(audio_asset_id,title="try",dimension="16:9"):
+def generate_video(avatar_id,audio_asset_id,title="try"):
     HEYGEN_API_KEY = get_env_var("HEYGEN_API_KEY")
     url = "https://api.heygen.com/v2/video/generate"
     headers = {
@@ -41,12 +41,12 @@ def generate_video(audio_asset_id,title="try",dimension="16:9"):
             {
                 "character": {
                     "type": "avatar",
-                    "avatar_id":"7890302cd10645e1900cea865a8268fb",
+                    "avatar_id":avatar_id,
                     "scale": 1.0,
                     "avatar_style": "normal",
                     "offset": {
                         "x": 0.0,
-                        "y": 0.3,
+                        "y": 0.0,
                     }
                 },
                 "voice": {
