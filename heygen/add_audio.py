@@ -252,3 +252,8 @@ async def add_audio_pipeline(video_url, audio_url, output_video_path="output.mp4
     finally:
         # Clean up all temporary files
         cleanup_temp_files(video_temp_path, audio_temp_path, merged_video_path, segments_temp_file)
+
+# FFmpeg already uses multiple threads internally
+# Adding multiprocessing on top can cause CPU thrashing
+# Context switching overhead becomes significant
+# Can actually make performance worse, not better

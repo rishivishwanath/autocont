@@ -32,3 +32,7 @@ avatar_id and voice_id are already fetched make sure to pass that
 /get_random_text
 text
 not compulsory to pass anything
+
+
+asyncio.to_thread when calling sync
+asyncio.create_task when calling async

@@ -8,12 +8,10 @@ import asyncio
 
 async def generate_speech(text, voice_id,output_path="output/output1.mp3"):
     print("Generating now")
-    audio_bytes = use_polly(text)
-    loop = asyncio.get_running_loop()
-    audio_bytes = await loop.run_in_executor(None, use_polly, text)
-
+    audio_bytes = await asyncio.to_thread(use_polly,text)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
         temp_audio_file.write(audio_bytes)
         temp_audio_path = temp_audio_file.name
     print("Audio saved at:", temp_audio_path)
     return temp_audio_path
+# cost of switching threads is greater than blocking write

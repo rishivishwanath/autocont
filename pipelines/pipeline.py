@@ -37,8 +37,11 @@ async def background_video_pipeline(text=None,
     video_link=await get_random_video_url()
     print(video_link)
     await add_audio_pipeline(video_link,audio_link, output_video_path="output/output.mp4", font_path=font_path)
-    await upload_video(
-        file_path="output/output.mp4",
-        title=title,
-        description=description,user_id=user_id
+    asyncio.create_task(
+        upload_video(
+            file_path="output/output.mp4",
+            title=title,
+            description=description,
+            user_id=user_id
+        )
     )
