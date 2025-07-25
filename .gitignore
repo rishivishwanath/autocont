@@ -1,3 +1,6 @@
 .env
 /output
 redis_control.py
+try.py
+poetry.lock
+pyproject.toml
