@@ -1,32 +1,27 @@
 import subprocess
+import aiohttp
 import whisper
 import os
 import json
-import redis
-import requests
 import tempfile
 from moviepy import VideoFileClip, TextClip, CompositeVideoClip
 import textwrap
 from pathlib import Path
 import sys
+import requests
+import uuid
 sys.path.append(str((Path(__file__).resolve().parent.parent)))
 from utils import get_env_var
 
-REDIS_CONFIG = {
-    "host": "redis-13357.c92.us-east-1-3.ec2.redns.redis-cloud.com",
-    "port": 13357,
-    "decode_responses": True,
-    "username": "default",
-    "password": get_env_var("REDIS_PASSWORD"),
-}
-REDIS_KEY = "seg"
-
-def download_to_temp(url, extension=None):
+async def download_to_temp(url, extension=None):
     """Download file from URL to temporary file."""
     try:
         print(f"Downloading: {url}")
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=30) as response:
+                response.raise_for_status()
+                content = await response.read()
+
 
         # Determine extension from URL or use provided extension
         if not extension:
@@ -38,7 +33,7 @@ def download_to_temp(url, extension=None):
                 extension = '.tmp'
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp_file:
-            tmp_file.write(response.content)
+            tmp_file.write(content)
             print(f"Downloaded to: {tmp_file.name}")
             return tmp_file.name
             
@@ -92,8 +87,8 @@ def merge_audio_video(video_path, audio_path, output_path="merged_output.mp4"):
         print(f"Unexpected error in merge_audio_video: {e}")
         raise
 
-def transcribe_audio(audio_path):
-    """Transcribe audio file and store segments in Redis."""
+def transcribe_audio(audio_path, request_id=None):
+    """Transcribe audio file and store segments in temporary JSON file."""
     try:
         print("Loading Whisper model...")
         model = whisper.load_model("base")
@@ -101,21 +96,36 @@ def transcribe_audio(audio_path):
         print(f"Transcribing audio: {audio_path}")
         result = model.transcribe(audio_path)
 
-        # Connect to Redis and clear existing data
-        r = redis.Redis(**REDIS_CONFIG)
-        r.delete(REDIS_KEY)
+        # Create unique temporary file for storing segments
+        # Use request_id if provided, otherwise generate a UUID
+        if not request_id:
+            request_id = str(uuid.uuid4())
         
-        print(f"Storing {len(result['segments'])} segments in Redis...")
-        for i, segment in enumerate(result['segments'], start=1):
-            entry = {
-                "index": i,
-                "start": format_timestamp(segment["start"]),
-                "end": format_timestamp(segment["end"]),
-                "text": segment["text"].strip()
-            }
-            r.rpush(REDIS_KEY, json.dumps(entry))
+        segments_temp_file = tempfile.NamedTemporaryFile(
+            mode='w', 
+            suffix=f'_segments_{request_id}.json', 
+            delete=False
+        )
         
-        print("Transcription completed and stored in Redis.")
+        with segments_temp_file as tmp_file:
+            segments_data = []
+            print(f"Processing {len(result['segments'])} segments...")
+            
+            for i, segment in enumerate(result['segments'], start=1):
+                entry = {
+                    "index": i,
+                    "start": format_timestamp(segment["start"]),
+                    "end": format_timestamp(segment["end"]),
+                    "text": segment["text"].strip()
+                }
+                segments_data.append(entry)
+            
+            # Write all segments to the temporary JSON file
+            json.dump(segments_data, tmp_file, indent=2)
+            print(f"Stored {len(segments_data)} segments in temporary file: {segments_temp_file.name}")
+        
+        print("Transcription completed and stored in temporary file.")
+        return segments_temp_file.name
         
     except Exception as e:
         print(f"Error during transcription: {e}")
@@ -131,16 +141,20 @@ def format_timestamp(seconds):
     milliseconds = int((seconds - int(seconds)) * 1000)
     return f"{hours:02}:{minutes:02}:{secs:02},{milliseconds:03}"
 
-def overlay_subtitles_styled(video_path, output_path="styled_output.mp4", font_file="fonts/font.ttf"):
+def overlay_subtitles_styled(video_path, segments_file_path, output_path="styled_output.mp4", font_file="fonts/font.ttf"):
+    """Add subtitles to video using segments from the specified file."""
     # Load video
     clip = VideoFileClip(video_path)
-    # Connect to Redis and get segments
-    r = redis.Redis(**REDIS_CONFIG)
-    segments = r.lrange(REDIS_KEY, 0, -1)
+    
+    # Read segments from temporary JSON file
+    if not os.path.exists(segments_file_path):
+        raise FileNotFoundError(f"Segments file not found: {segments_file_path}")
+    
+    with open(segments_file_path, 'r') as f:
+        segments = json.load(f)
 
     text_clips = []
-    for seg_json in segments:
-        seg = json.loads(seg_json)
+    for seg in segments:
         start = parse_srt_time(seg["start"])
         end = parse_srt_time(seg["end"])
         text = seg["text"]
@@ -193,33 +207,41 @@ def cleanup_temp_files(*file_paths):
         except Exception as e:
             print(f"Warning: Could not remove {file_path}: {e}")
 
-async def add_audio_pipeline(video_url, audio_url, output_video_path="output.mp4", font_path="fonts/font.ttf"):
+async def add_audio_pipeline(video_url, audio_url, output_video_path="output.mp4", font_path="fonts/font.ttf", request_id=None):
     """
     Main pipeline function that downloads URLs to local files before processing.
+    Each request gets unique temporary files using request_id.
     """
+    # Generate unique request ID if not provided
+    if not request_id:
+        request_id = str(uuid.uuid4())
+    
+    print(f"Processing request: {request_id}")
+    
     video_temp_path = None
     audio_temp_path = None
-    merged_video_path = "temp_merged_video.mp4"
+    segments_temp_file = None
+    merged_video_path = f"temp_merged_video_{request_id}.mp4"
     
     try:
         # Download both video and audio to local temporary files
         print("Downloading video and audio files...")
-        video_temp_path = download_to_temp(video_url, '.mp4')
+        video_temp_path = await download_to_temp(video_url, '.mp4')
         audio_temp_path = audio_url
         
         # Merge video and audio using local file paths
         merge_audio_video(video_temp_path, audio_temp_path, merged_video_path)
         
-        # Transcribe audio
-        transcribe_audio(audio_temp_path)
+        # Transcribe audio and get the segments file path
+        segments_temp_file = transcribe_audio(audio_temp_path, request_id)
         
         # Create output directory if it doesn't exist
         output_dir = os.path.dirname(output_video_path)
         if output_dir and not os.path.exists(output_dir):
             os.makedirs(output_dir)
         
-        # Add subtitles
-        overlay_subtitles_styled(merged_video_path, output_path=output_video_path, font_file=font_path)
+        # Add subtitles using the segments file
+        overlay_subtitles_styled(merged_video_path, segments_temp_file, output_path=output_video_path, font_file=font_path)
         
         print(f"Pipeline completed successfully! Output: {output_video_path}")
         
@@ -227,5 +249,5 @@ async def add_audio_pipeline(video_url, audio_url, output_video_path="output.mp4
         print(f"Pipeline failed: {e}")
         raise
     finally:
-        # Clean up temporary files
-        cleanup_temp_files(video_temp_path, audio_temp_path, merged_video_path)
+        # Clean up all temporary files
+        cleanup_temp_files(video_temp_path, audio_temp_path, merged_video_path, segments_temp_file)

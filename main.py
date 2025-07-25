@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 from typing import Optional
 from fetchData.summarise_feed import give_text
 from pipelines.pipeline import background_video_pipeline
@@ -19,22 +19,30 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-class GenerateMinecraftRequest(BaseModel):
-    mode: Optional[int] = 1
+class GenerateBackgroundRequest(BaseModel):
+    mode: Optional[int] = Field(default=1)
     text: Optional[str] = None
-    voice_id: Optional[str] = "74f0f8d1b27147c4aa9c65f690a3ead3"
-    font_path: Optional[str] = "fonts/font.ttf"
-    title: Optional[str] = "You won't believe what just happened!"
-    description: Optional[str] = "Stay updated with the latest news in just 30 seconds!"
-    user_id: Optional[str] = None
+    voice_id: Optional[str] =Field(default= "74f0f8d1b27147c4aa9c65f690a3ead3")
+    font_path: Optional[str] = Field(default="fonts/font.ttf")
+    title: Optional[str] = Field(default="You won't believe what just happened!")
+    description: Optional[str] =Field(default= "Stay updated with the latest news in just 30 seconds!")
+    user_id: str = Field(...)
+
+class GenerateAvatarRequest(BaseModel):
+    user_id:str=Field(...)
+    mode: Optional[int] = Field(default=1)
     avatar_id: Optional[str] = "de90ffeec028414a90ad2d954dc85b41"
     audio_url: Optional[str] = None
+    text: Optional[str] = None
+    voice_id: Optional[str] =Field(default= "74f0f8d1b27147c4aa9c65f690a3ead3")
+    title: Optional[str] = Field(default="You won't believe what just happened!")
+    description: Optional[str] =Field(default= "Stay updated with the latest news in just 30 seconds!")
 
 class GenerateRandom(BaseModel):
     text: Optional[str] = None
 
 @app.post("/generate_background_video")
-async def get_background_video(request: GenerateMinecraftRequest):
+async def get_background_video(request: GenerateBackgroundRequest):
     try:
         text = request.text
         if request.mode != 0:
@@ -56,7 +64,7 @@ async def get_background_video(request: GenerateMinecraftRequest):
 
 @app.post("/generate_avatar_video")
 # generate_video_pipeline(user_id,mode=0, text=None,audio_url="output/speech.mp3",title="N/A",description="N/A",avatar_id="de90ffeec028414a90ad2d954dc85b41", voice_id="74f0f8d1b27147c4aa9c65f690a3ead3"):
-async def get_avatar_video(request: GenerateMinecraftRequest):
+async def get_avatar_video(request: GenerateAvatarRequest):
     try:
         text = request.text
         avatar_id = request.avatar_id
