@@ -45,11 +45,10 @@ class GenerateRandom(BaseModel):
 async def get_background_video(request: GenerateBackgroundRequest,background_tasks:BackgroundTasks):
     try:
         text = request.text
-        if request.mode != 0:
-            text = give_text()
-            
+
         background_tasks.add_task(
         background_video_pipeline,
+        mode=request.mode,
         text=text,
         voice_id=request.voice_id,
         font_path=request.font_path,
@@ -65,7 +64,7 @@ async def get_background_video(request: GenerateBackgroundRequest,background_tas
 
 @app.post("/generate_avatar_video")
 # generate_video_pipeline(user_id,mode=0, text=None,audio_url="output/speech.mp3",title="N/A",description="N/A",avatar_id="de90ffeec028414a90ad2d954dc85b41", voice_id="74f0f8d1b27147c4aa9c65f690a3ead3"):
-async def get_avatar_video(request: GenerateAvatarRequest):
+async def get_avatar_video(request: GenerateAvatarRequest,background_tasks:BackgroundTasks):
     try:
         text = request.text
         avatar_id = request.avatar_id
@@ -73,7 +72,14 @@ async def get_avatar_video(request: GenerateAvatarRequest):
         print(f"Avatar ID: {avatar_id}, Voice ID: {voice_id}")
         if request.user_id is None:
             raise HTTPException(status_code=400, detail="User ID is required")
-        await avatar_video_pipeline(request.user_id,mode=0, text=text,audio_url=request.audio_url, title=request.title, description=request.description, avatar_id=request.avatar_id, voice_id=request.voice_id)
+        background_tasks.add_task(avatar_video_pipeline,
+                                  request.user_id,mode=0,
+                                  text=text,
+                                  audio_url=request.audio_url,
+                                  title=request.title,
+                                  description=request.description,
+                                  avatar_id=request.avatar_id,
+                                  voice_id=request.voice_id)
         return {"status": "success", "message": "Video generated successfully!"}
     
     except Exception as e:

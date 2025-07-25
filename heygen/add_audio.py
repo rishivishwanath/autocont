@@ -222,7 +222,9 @@ async def add_audio_pipeline(video_url, audio_url, output_video_path="output.mp4
     video_temp_path = None
     audio_temp_path = None
     segments_temp_file = None
-    merged_video_path = f"temp_merged_video_{request_id}.mp4"
+    folder = "videos/temp"
+    tempfilename = f"temp_merged_video_{request_id}.mp4"
+    merged_video_path = os.path.join(folder,tempfilename)
     
     try:
         # Download both video and audio to local temporary files

@@ -14,7 +14,7 @@ supabase: Client = create_client(url, key)
 # File path of the video
 VIDEO_FILE = "output/output.mp4"
 
-async def get_credentials(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN):
+def get_credentials(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN):
     creds_data = {
         "token": "",
         "refresh_token": REFRESH_TOKEN,

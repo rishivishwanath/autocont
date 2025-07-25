@@ -8,6 +8,7 @@ import random
 from heygen.add_audio import add_audio_pipeline
 from upload.upload_video import upload_video
 import asyncio
+from fetchData.summarise_feed import give_text
 
 async def get_random_video_url():
     url=get_env_var("SUPABASE_URL")
@@ -23,11 +24,13 @@ async def get_random_video_url():
     video_link = await asyncio.to_thread(get_url)
     return video_link
 
-async def background_video_pipeline(text=None, 
+async def background_video_pipeline(mode=1,text=None, 
             voice_id="JBFqnCBsd6RMkjVDRZzb",
             font_path="fonts/font.ttf",
             title="You won't believe what just happened!",
             description="Stay updated with the latest news in just 30 seconds!",user_id=None):
+    if mode != 0:
+        text = await give_text()
     print("Generating speech...")
         # N2lVS1w4EtoT3dr4eOWO
         # ThT5KcBeYPX3keUQqHPh dorothy

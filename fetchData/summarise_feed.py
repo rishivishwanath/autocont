@@ -10,6 +10,8 @@ from pathlib import Path
 import sys
 sys.path.append(str((Path(__file__).resolve().parent.parent)))
 from utils import get_env_var
+import asyncio
+import aiohttp
 
 REDIS_CONFIG = {
     "host": get_env_var("REDIS_HOST"),
@@ -21,19 +23,21 @@ REDIS_CONFIG = {
 
 r= redis.Redis(**REDIS_CONFIG)
 
-
-def give_text():
+async def get_currnews():
     url=get_env_var("SUPABASE_URL")
     key=get_env_var("SUPABASE_KEY")
-
     supabase:Client=create_client(url, key)
-
-    response=(supabase.table("curr").select("*").execute())
-
-    currnews=(supabase.table("storeart").select("url").eq("num", (r.get("num"))).execute())
+    news_index = await asyncio.to_thread(r.incr, "num")  # returns the incremented value
+    currnews = await asyncio.to_thread(
+    lambda: supabase.table("storeart").select("url").eq("num", news_index - 1).execute()
+)
     print(r.get("num"))
-    r.set("num", int(r.get("num")) + 1)
-    print(r.get("num"))
+    return currnews
+
+
+async def give_text():
+    currnews=await get_currnews()
+    print(currnews)
     urlsum= "https://prod.api.market/api/v1/pipfeed/parse/extract"
 
     payload =json.dumps({"url": currnews.data[0]["url"]})
@@ -43,12 +47,12 @@ def give_text():
         'content-type': "application/json"
         }
 
-
-    res = requests.post(urlsum, data=payload, headers=headers)
-    article_text = res.json().get("text")
-
-
-
+    async with aiohttp.ClientSession() as session:
+            async with session.post(urlsum, data=payload, headers=headers) as res:
+                res.raise_for_status()
+                json_data = await res.json()
+                article_text = json_data.get("text")
+    print(article_text)
 
     model = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash",  # safest and fastest
@@ -72,7 +76,8 @@ def give_text():
         ("user", article_text)
     ])
 
-    messages = prompt_template.format_messages() 
-    response = model.invoke(messages)            
+    prompt = prompt_template.format()
+    response = await model.ainvoke(prompt)
+    print(response)
     print(response.content)
     return response.content
