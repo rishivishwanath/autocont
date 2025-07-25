@@ -6,13 +6,17 @@ from supabase import create_client, Client
 import json
 import redis
 from langchain_google_genai import ChatGoogleGenerativeAI
+from pathlib import Path
+import sys
+sys.path.append(str((Path(__file__).resolve().parent.parent)))
+from utils import get_env_var
 
 REDIS_CONFIG = {
-    "host": "redis-13357.c92.us-east-1-3.ec2.redns.redis-cloud.com",
-    "port": 13357,
+    "host": get_env_var("REDIS_HOST"),
+    "port": get_env_var("REDIS_PORT"),
     "decode_responses": True,
     "username": "default",
-    "password": "MaMdTtfUFDj2vtOMjwD4IK3F2lae4oUP",
+    "password": get_env_var("REDIS_PASSWORD"),
 }
 
 r= redis.Redis(**REDIS_CONFIG)
