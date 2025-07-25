@@ -2,9 +2,9 @@ import requests
 import json
 from utils import get_env_var
 import time
+import aiohttp
 
-
-def generate_video_text(text,title="try",avatar_id="de90ffeec028414a90ad2d954dc85b41", voice_id="74f0f8d1b27147c4aa9c65f690a3ead3"):
+async def generate_video_text(text,title="try",avatar_id="de90ffeec028414a90ad2d954dc85b41", voice_id="74f0f8d1b27147c4aa9c65f690a3ead3"):
     HEYGEN_API_KEY = get_env_var("HEYGEN_API_KEY")
     url = "https://api.heygen.com/v2/video/generate"
     headers = {
@@ -44,12 +44,16 @@ def generate_video_text(text,title="try",avatar_id="de90ffeec028414a90ad2d954dc8
             }
         ]
     }
-    response=requests.post(url,headers=headers,data=json.dumps(payload))
-    if response.status_code==200:
-        result = response.json()
-        print(result)
-        print(f"Video request successful. Video ID: {result.get('data')['video_id']}")
-        return (result.get('data')['video_id'])
+    timeout=aiohttp.ClientTimeout(900)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.post(url, headers=headers, data=json.dumps(payload)) as res:
+            res.raise_for_status()
+            response = await res.json()  
+
+    if res.status == 200:
+        print(response)
+        print(f"Video request successful. Video ID: {response.get('data', {}).get('video_id')}")
+        return response.get('data', {}).get('video_id')
     else:
-        print("Error creating video:", response.status_code, response.text)
+        print("Error creating video:", res.status, await res.text())
         return None

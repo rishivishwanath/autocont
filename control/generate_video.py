@@ -7,6 +7,7 @@ import time
 from heygen.generate_video_audio import generate
 from heygen.generate_video_text import generate_video_text
 from fetchData.summarise_feed import give_text
+import aiohttp
 import asyncio
 
 async def generate_heygen_video(avatar_id,voice_id,a=0,text=None,input_path="output/output1.mp3"):
@@ -16,7 +17,7 @@ async def generate_heygen_video(avatar_id,voice_id,a=0,text=None,input_path="out
     else:
         if text is None:
             text = await give_text()
-        video_id = generate_video_text(text=text, title="try",avatar_id=avatar_id, voice_id=voice_id)
+        video_id = await generate_video_text(text=text, title="try",avatar_id=avatar_id, voice_id=voice_id)
     print("Video ID:", video_id)
     if not video_id:
         print("Video ID not returned.")
@@ -27,23 +28,24 @@ async def generate_heygen_video(avatar_id,voice_id,a=0,text=None,input_path="out
         "accept": "application/json",
         "x-api-key": HEYGEN_API_KEY
     }
-    response = requests.get(url, headers=headers)
-    result = response.json()
-    status = result.get("data")['status']
-    i=0
-    while (status != "completed" and status != "failed"):
-        response = requests.get(url, headers=headers)
-        result = response.json()
+    timeout=aiohttp.ClientTimeout(900)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        i=0
+        while i <= 50:
+            async with session.get(url, headers=headers) as res:
+                result = await res.json()  # ✅ Await .json()
+                status = result.get("data", {}).get("status")
+                print("Current status:", status)
 
-        status = result.get("data")["status"]
-        print("Current status:", status)
-        if status == "completed":
-            print("Video URL:", result.get("data")['video_url'])
-            return result.get("data")['video_url']
-        elif status == "failed":
-            print("Video generation failed.")
-            return "failed"
+                if status == "completed":
+                    video_url = result.get("data", {}).get("video_url")
+                    print("Video URL:", video_url)
+                    return video_url
+                elif status == "failed":
+                    print("Video generation failed.")
+                    return "failed"
 
-        time.sleep(5)
-        if i>25:
-            return "failed"
+            await asyncio.sleep(5)  # ✅ Non-blocking sleep
+            i += 1
+
+        return "failed"
