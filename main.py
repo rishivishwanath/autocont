@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel,Field
 from typing import Optional
@@ -42,20 +42,21 @@ class GenerateRandom(BaseModel):
     text: Optional[str] = None
 
 @app.post("/generate_background_video")
-async def get_background_video(request: GenerateBackgroundRequest):
+async def get_background_video(request: GenerateBackgroundRequest,background_tasks:BackgroundTasks):
     try:
         text = request.text
         if request.mode != 0:
             text = give_text()
             
-        await background_video_pipeline(
-            text=text,
-            voice_id=request.voice_id,
-            font_path=request.font_path,
-            title=request.title,
-            description=request.description,
-            user_id=request.user_id
-        )
+        background_tasks.add_task(
+        background_video_pipeline,
+        text=text,
+        voice_id=request.voice_id,
+        font_path=request.font_path,
+        title=request.title,
+        description=request.description,
+        user_id=request.user_id
+    )
         
         return {"status": "success", "message": "Video generated successfully!"}
     

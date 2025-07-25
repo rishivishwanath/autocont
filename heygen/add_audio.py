@@ -16,9 +16,10 @@ from utils import get_env_var
 async def download_to_temp(url, extension=None):
     """Download file from URL to temporary file."""
     try:
+        timeout = aiohttp.ClientTimeout(total=900)
         print(f"Downloading: {url}")
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=30) as response:
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(url) as response:
                 response.raise_for_status()
                 content = await response.read()
 

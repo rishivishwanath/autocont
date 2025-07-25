@@ -30,7 +30,7 @@ async def get_credentials(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN):
         creds.refresh(request)
     return creds
 
-def upload_video(file_path, title, description,user_id, tags=None):
+async def upload_video(file_path, title, description,user_id, tags=None):
     values= (
     supabase.table("user_api_keys")
     .select("*")
