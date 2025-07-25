@@ -1,12 +1,15 @@
 from supabase import create_client, Client
+from pathlib import Path
+import sys
+sys.path.append(str((Path(__file__).resolve().parent.parent)))
 from control.generate_speech import generate_speech
 from fetchData.summarise_feed import give_text
 from utils import get_env_var
 import random
-from heygen.add_audio import pipeline
+from heygen.add_audio import add_audio_pipeline
 from upload.upload_video import upload_video
 
-def execute(text=None, 
+async def background_video_pipeline(text=None, 
             voice_id="JBFqnCBsd6RMkjVDRZzb",
             font_path="fonts/font.ttf",
             title="You won't believe what just happened!",
@@ -30,8 +33,8 @@ def execute(text=None,
         f"output_{random_number}.mp4", 
         ))
     print(video_link)
-    pipeline(video_link,audio_link, output_video_path="output/output.mp4", font_path=font_path)
-    upload_video(
+    await add_audio_pipeline(video_link,audio_link, output_video_path="output/output.mp4", font_path=font_path)
+    await upload_video(
         file_path="output/output.mp4",
         title=title,
         description=description,user_id=user_id

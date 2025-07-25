@@ -7,13 +7,17 @@ import requests
 import tempfile
 from moviepy import VideoFileClip, TextClip, CompositeVideoClip
 import textwrap
+from pathlib import Path
+import sys
+sys.path.append(str((Path(__file__).resolve().parent.parent)))
+from utils import get_env_var
 
 REDIS_CONFIG = {
     "host": "redis-13357.c92.us-east-1-3.ec2.redns.redis-cloud.com",
     "port": 13357,
     "decode_responses": True,
     "username": "default",
-    "password": "MaMdTtfUFDj2vtOMjwD4IK3F2lae4oUP",
+    "password": get_env_var("REDIS_PASSWORD"),
 }
 REDIS_KEY = "seg"
 
@@ -189,7 +193,7 @@ def cleanup_temp_files(*file_paths):
         except Exception as e:
             print(f"Warning: Could not remove {file_path}: {e}")
 
-def pipeline(video_url, audio_url, output_video_path="output.mp4", font_path="fonts/font.ttf"):
+async def add_audio_pipeline(video_url, audio_url, output_video_path="output.mp4", font_path="fonts/font.ttf"):
     """
     Main pipeline function that downloads URLs to local files before processing.
     """

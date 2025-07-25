@@ -2,6 +2,9 @@ import requests
 import json
 import sys
 import os
+from pathlib import Path
+import sys
+sys.path.append(str((Path(__file__).resolve().parent.parent)))
 from control.generate_video import generate_heygen_video
 import tempfile
 from supabase import create_client, Client
@@ -43,7 +46,7 @@ def cleanup_temp_files(*file_paths):
         except Exception as e:
             print(f"Warning: Could not remove {file_path}: {e}")
 
-def generate_video_pipeline(user_id,mode=0, text=None,audio_url="output/speech.mp3",title="N/A",description="N/A",avatar_id="de90ffeec028414a90ad2d954dc85b41", voice_id="74f0f8d1b27147c4aa9c65f690a3ead3"):
+def avatar_video_pipeline(user_id,mode=0, text=None,audio_url="output/speech.mp3",title="N/A",description="N/A",avatar_id="de90ffeec028414a90ad2d954dc85b41", voice_id="74f0f8d1b27147c4aa9c65f690a3ead3"):
     if mode == 0:
         result=generate_heygen_video(a=0, text=text,avatar_id=avatar_id, voice_id=voice_id)
     elif mode == 1:
