@@ -1,3 +1,6 @@
+Great work rishi
+- by vivek b v
+
 ## System Overview
 
 The Video Generation API is a FastAPI-based service that automatically creates short-form videos with AI avatars or background content. It integrates multiple external services to fetch news, generate speech, create videos, and upload to YouTube.
