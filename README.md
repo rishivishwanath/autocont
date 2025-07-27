@@ -1,5 +1,3 @@
-Great work rishi
-- by vivek b v
 
 ## System Overview
 
